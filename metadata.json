@@ -1,0 +1,7 @@
+{
+  "name": "NutriVision & Health Planner",
+  "description": "AI-powered food scanner with real nutritional breakdown, cooking recipes, regional weekly meal plans, smart grocery lists, and wearable health device syncing.",
+  "requestFramePermissions": ["camera", "geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
