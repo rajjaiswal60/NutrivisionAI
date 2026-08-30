@@ -80,7 +80,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Main Top Header Bar (Always visible for all users) */}
         <div className="flex items-center justify-between h-16 sm:h-20 gap-2 sm:gap-4">
           
-          {/* Brand Logo */}
+          {/* Brand Logo & Beta Badge */}
           <div className="flex items-center gap-2.5 shrink-0">
             <button
               onClick={() => {
@@ -92,15 +92,25 @@ export const Navbar: React.FC<NavbarProps> = ({
               }}
               className="flex items-center gap-2.5 text-left group focus:outline-none"
             >
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-[#635BFF] to-[#D4FF44] p-0.5 shadow-[0_0_15px_rgba(99,91,255,0.25)] group-hover:scale-105 transition-transform shrink-0">
-                <div className="w-full h-full bg-[#0A0A0A] rounded-[10px] flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-[#D4FF44]" />
+              <div className="relative shrink-0">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-[#635BFF] to-[#D4FF44] p-0.5 shadow-[0_0_15px_rgba(99,91,255,0.25)] group-hover:scale-105 transition-transform shrink-0">
+                  <div className="w-full h-full bg-[#0A0A0A] rounded-[10px] flex items-center justify-center">
+                    <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-[#D4FF44]" />
+                  </div>
                 </div>
+                <span className="absolute -top-1 -right-1 px-1 py-0.2 bg-[#D4FF44] text-[#0A0A0A] text-[8px] font-black rounded tracking-tighter shadow-sm border border-[#0A0A0A] uppercase leading-tight">
+                  BETA
+                </span>
               </div>
               <div>
-                <span className="text-lg sm:text-2xl font-black tracking-tighter text-[#F5F5F5] flex items-center font-display leading-none">
-                  NUTRI<span className="text-[#D4FF44]">VISION</span>
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-lg sm:text-2xl font-black tracking-tighter text-[#F5F5F5] flex items-center font-display leading-none">
+                    NUTRI<span className="text-[#D4FF44]">VISION</span>
+                  </span>
+                  <span className="px-1.5 py-0.5 rounded-md text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-[#D4FF44]/20 text-[#D4FF44] border border-[#D4FF44]/40 shadow-[0_0_8px_rgba(212,255,68,0.2)]">
+                    BETA
+                  </span>
+                </div>
                 <span className="text-[8px] sm:text-[9px] uppercase tracking-[0.2em] text-[#888888] block mt-0.5 sm:mt-1 font-black">
                   AI Food Lens & Health Sync
                 </span>
@@ -331,10 +341,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                   }}
                 />
                 <div>
-                  <div className="text-base font-bold text-white flex items-center gap-1.5">
+                  <div className="text-base font-bold text-white flex items-center gap-1.5 flex-wrap">
                     <span>{user.name}</span>
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#10B981]/20 text-[#10B981] font-bold">
                       Google Sync
+                    </span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#D4FF44]/20 text-[#D4FF44] font-bold border border-[#D4FF44]/30">
+                      Beta
                     </span>
                   </div>
                   <div className="text-xs text-[#94A3B8]">{user.email}</div>

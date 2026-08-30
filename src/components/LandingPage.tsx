@@ -110,6 +110,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSignIn }) => {
               onClick={onSignIn}
               className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#12111D] border border-[#2B274C] text-[#B8A6FF] text-xs font-semibold hover:border-[#7056F5] transition-all cursor-pointer shadow-sm group"
             >
+              <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-[#D4FF44]/20 text-[#D4FF44] border border-[#D4FF44]/40">
+                BETA
+              </span>
               <Sparkles className="w-3.5 h-3.5 text-[#A78BFA]" />
               <span>Supercharged nutrition with AI Vision</span>
               <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
@@ -175,7 +178,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSignIn }) => {
                 <div className="text-[11px] text-[#64748B] font-mono font-medium">+1 (415) 873-1159</div>
                 <div className="text-lg font-bold text-white tracking-tight flex items-center justify-center gap-1.5 mt-0.5">
                   <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
-                  NutriVision AI Lens
+                  <span>NutriVision AI Lens</span>
+                  <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-[#D4FF44]/20 text-[#D4FF44] border border-[#D4FF44]/40">
+                    BETA
+                  </span>
                 </div>
               </div>
 
@@ -754,10 +760,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSignIn }) => {
       <footer className="border-t border-[#1C1A33] py-10 text-center text-xs text-[#64748B]">
         <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-md bg-[#635BFF] flex items-center justify-center text-white font-bold text-xs">
+            <div className="w-5 h-5 rounded-md bg-[#635BFF] flex items-center justify-center text-white font-bold text-xs shadow-sm">
               N
             </div>
             <span className="text-white font-bold tracking-tight">NutriVision AI</span>
+            <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-[#D4FF44]/20 text-[#D4FF44] border border-[#D4FF44]/40">
+              BETA
+            </span>
           </div>
           <div>
             Built by <strong>Raj Jaiswal</strong> & <strong>Nikhil G</strong> • Powered by Google Gemini 3.6 Multimodal AI

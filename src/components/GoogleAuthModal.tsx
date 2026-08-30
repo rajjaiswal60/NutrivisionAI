@@ -126,11 +126,16 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
               </svg>
             </div>
             <div>
-              <h2 className="text-base font-black text-[#F5F5F5] font-display uppercase tracking-tight">
-                Google Authentication
-              </h2>
+              <div className="flex items-center gap-1.5">
+                <h2 className="text-base font-black text-[#F5F5F5] font-display uppercase tracking-tight">
+                  Google Authentication
+                </h2>
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-[#D4FF44]/20 text-[#D4FF44] border border-[#D4FF44]/40">
+                  BETA
+                </span>
+              </div>
               <p className="text-xs text-[#888888] font-medium">
-                Sign in to launch your Food Lens & Health Diary
+                Sign in to launch your NutriVision Food Lens & Health Diary
               </p>
             </div>
           </div>

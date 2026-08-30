@@ -322,6 +322,9 @@ export const FoodScanner: React.FC<FoodScannerProps> = ({
       <div className="text-center space-y-3">
         <div className="flex items-center justify-center">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#161616] border border-[#262626] text-[#D4FF44] text-[11px] font-black uppercase tracking-widest shadow-sm">
+            <span className="px-1.5 py-0.5 rounded bg-[#D4FF44]/20 text-[#D4FF44] text-[9px] font-black border border-[#D4FF44]/30">
+              BETA
+            </span>
             <Sparkles className="w-3.5 h-3.5 text-[#D4FF44]" />
             <span>AI Multimodal Food Vision</span>
           </div>
