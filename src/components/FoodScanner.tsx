@@ -3,6 +3,8 @@ import { Camera, Upload, RefreshCw, Sparkles, Image as ImageIcon, CheckCircle, A
 import { FoodAnalysis, GroceryItem, UserProfile } from '../types';
 import { SAMPLE_FOOD_DISHES } from '../data/mockData';
 import { LocalFoodSuggestions } from './LocalFoodSuggestions';
+import { analyzeFoodWithGeminiFlash } from '../lib/geminiVisionService';
+import { GEMINI_CONFIG, getActiveGeminiApiKey } from '../lib/geminiConfig';
 
 interface FoodScannerProps {
   onAnalysisComplete: (result: FoodAnalysis) => void;
@@ -239,30 +241,36 @@ export const FoodScanner: React.FC<FoodScannerProps> = ({
     ];
 
     const finalHint = (hint || customDishQuery || '').trim();
-    const storedApiKey = user.geminiApiKey || localStorage.getItem('nutrivision_gemini_key') || localStorage.getItem('connAiApiKey') || '';
+    const activeKey = getActiveGeminiApiKey();
 
-    // 1. Try Direct Browser Gemini Vision if API key is provided
-    if (storedApiKey && storedApiKey.trim().length > 10 && base64Image) {
+    // 1. Primary: Direct Client-Side Google Gemini Flash Vision
+    if (activeKey && base64Image) {
       try {
-        const directResult = await callDirectGeminiVision(base64Image, storedApiKey.trim(), finalHint);
-        if (directResult) {
+        const geminiResult = await analyzeFoodWithGeminiFlash(base64Image, finalHint);
+        if (geminiResult.success && geminiResult.data) {
           timers.forEach(clearTimeout);
-          onAnalysisComplete(directResult);
+          onAnalysisComplete(geminiResult.data);
+          setIsScanning(false);
+          return;
+        } else if (!geminiResult.success && geminiResult.error && !geminiResult.error.includes('No Gemini API key')) {
+          timers.forEach(clearTimeout);
+          setSelectedImage(null);
+          setNonFoodError(geminiResult.error);
           setIsScanning(false);
           return;
         }
       } catch (err) {
-        console.warn('Direct Gemini Vision attempt note:', err);
+        console.warn('Gemini Flash vision client note:', err);
       }
     }
 
-    // 2. Try Server Gemini Endpoint (if running in fullstack mode)
+    // 2. Secondary: Try Server Gemini Endpoint (if running in fullstack Node.js mode)
     try {
       const res = await fetch('/api/analyze-food', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(storedApiKey ? { 'x-gemini-api-key': storedApiKey } : {}),
+          ...(activeKey ? { 'x-gemini-api-key': activeKey } : {}),
         },
         body: JSON.stringify({
           imageBase64: base64Image,
@@ -282,6 +290,7 @@ export const FoodScanner: React.FC<FoodScannerProps> = ({
           ...json.data,
           imageUrl: base64Image || json.data.imageUrl,
         });
+        setIsScanning(false);
         return;
       } else if (json && json.data && json.data.isFood === false) {
         timers.forEach(clearTimeout);
@@ -289,128 +298,23 @@ export const FoodScanner: React.FC<FoodScannerProps> = ({
         setNonFoodError(
           json?.error || 'No edible food detected in this image. Please take or upload a clear photo of a food dish, cooked meal, beverage, or grocery ingredient.'
         );
+        setIsScanning(false);
         return;
       }
     } catch (err: any) {
       console.warn('Server endpoint unavailable (static mode):', err?.message || err);
     }
 
-    // 3. Resilient Static / Client-Side Fallback for GitHub Pages
+    // 3. Fallback: If no API key is set yet, show key modal or smart match
     timers.forEach(clearTimeout);
+    if (!activeKey && !finalHint) {
+      setShowApiKeyModal(true);
+    }
     fallbackToSampleDish(base64Image, finalHint);
     setIsScanning(false);
   };
 
-  // Direct client-side Gemini Vision caller for GitHub Pages
-  const callDirectGeminiVision = async (base64Image: string, apiKey: string, hint?: string): Promise<FoodAnalysis | null> => {
-    const cleanBase64 = base64Image.replace(/^data:image\/[a-z]+;base64,/, '');
-    const promptText = `You are NutriVision AI, an expert Clinical Nutritionist and Michelin Chef.
-Analyze this food image:
-1. Identify all food items, vegetables, proteins, and toppings.
-2. Estimate portion size and total calories (Protein*4 + Carbs*4 + Fat*9).
-3. Provide Protein (g), Carbs (g), Fat (g), Fiber (g), Sugar (g), Sodium (mg), Glycemic Index, and Health Score (1-100).
-4. Provide vitamins, minerals, dietary tags, allergen alerts, health factors, ingredients list, and step-by-step recipe.
-${hint ? `Hint: ${hint}` : ''}
-Return ONLY valid JSON matching:
-{
-  "isFood": true,
-  "dishName": "Dish Name",
-  "cuisineType": "Cuisine",
-  "confidence": 98,
-  "summary": "Summary of nutritional and flavor profile",
-  "portionSize": "1 medium portion",
-  "calories": 520,
-  "proteinG": 22,
-  "carbsG": 60,
-  "fatG": 18,
-  "fiberG": 6,
-  "sugarG": 5,
-  "sodiumMg": 550,
-  "glycemicIndex": 50,
-  "healthScore": 90,
-  "vitamins": [{"name": "Vitamin C", "amount": "40 mg", "dailyValuePct": 45, "benefit": "Antioxidant & Immunity"}],
-  "minerals": [{"name": "Calcium", "amount": "280 mg", "dailyValuePct": 28, "benefit": "Bone Health"}],
-  "dietaryTags": ["High Fiber"],
-  "allergenAlerts": [],
-  "healthFactors": {"antiInflammatoryRating": "High", "heartHealthScore": "Good", "satietyIndex": "High", "gutHealthImpact": "Fiber rich"},
-  "ingredients": [{"item": "Ingredient", "quantity": "100g", "category": "Produce & Greens", "estimatedCalories": 120}],
-  "cookingSteps": [{"stepNumber": 1, "title": "Prep", "instruction": "Prepare ingredients.", "durationMinutes": 5}],
-  "prepTimeMinutes": 10,
-  "cookTimeMinutes": 15,
-  "difficulty": "Easy",
-  "chefTips": ["Serve fresh."]
-}`;
 
-    const models = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-3.6-flash'];
-    for (const model of models) {
-      try {
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  { inline_data: { mime_type: 'image/jpeg', data: cleanBase64 } },
-                  { text: promptText }
-                ]
-              }
-            ]
-          })
-        });
-
-        if (!res.ok) continue;
-        const data = await res.json();
-        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!rawText) continue;
-
-        const cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-        const parsed = JSON.parse(cleanJson);
-        if (parsed && parsed.isFood !== false && (parsed.dishName || parsed.meal_name)) {
-          return {
-            id: `scan-${Date.now()}`,
-            isFood: true,
-            dishName: parsed.dishName || parsed.meal_name || 'Nutrient-Dense Meal',
-            cuisineType: parsed.cuisineType || 'Chef Specialty',
-            confidence: parsed.confidence || 96,
-            summary: parsed.summary || 'AI-analyzed nutritional meal.',
-            portionSize: parsed.portionSize || '1 standard serving',
-            calories: parsed.calories || 480,
-            proteinG: parsed.proteinG || 24,
-            carbsG: parsed.carbsG || 55,
-            fatG: parsed.fatG || 16,
-            fiberG: parsed.fiberG || 6,
-            sugarG: parsed.sugarG || 5,
-            sodiumMg: parsed.sodiumMg || 480,
-            glycemicIndex: parsed.glycemicIndex || 48,
-            healthScore: parsed.healthScore || 91,
-            vitamins: parsed.vitamins || [{ name: 'Vitamin C', amount: '45 mg', dailyValuePct: 50, benefit: 'Immunity' }],
-            minerals: parsed.minerals || [{ name: 'Calcium', amount: '220 mg', dailyValuePct: 22, benefit: 'Bone Strength' }],
-            dietaryTags: parsed.dietaryTags || ['Rich in Micronutrients'],
-            allergenAlerts: parsed.allergenAlerts || [],
-            healthFactors: parsed.healthFactors || {
-              antiInflammatoryRating: 'High',
-              heartHealthScore: 'Good',
-              satietyIndex: 'High',
-              gutHealthImpact: 'Supports gut microbiome',
-            },
-            ingredients: parsed.ingredients || [{ item: 'Fresh Ingredients', quantity: '200g', category: 'Produce & Greens', estimatedCalories: 180 }],
-            cookingSteps: parsed.cookingSteps || [{ stepNumber: 1, title: 'Assembly', instruction: 'Garnish and serve hot.', durationMinutes: 5 }],
-            prepTimeMinutes: parsed.prepTimeMinutes || 10,
-            cookTimeMinutes: parsed.cookTimeMinutes || 15,
-            difficulty: parsed.difficulty || 'Easy',
-            chefTips: parsed.chefTips || ['Enjoy freshly prepared for maximum bioavailable nutrients.'],
-            timestamp: Date.now(),
-            imageUrl: base64Image,
-          };
-        }
-      } catch (e) {
-        console.warn(`Direct model ${model} error:`, e);
-      }
-    }
-    return null;
-  };
 
   // Robust static fallback for GitHub Pages
   const fallbackToSampleDish = (base64Image: string, hint: string) => {
