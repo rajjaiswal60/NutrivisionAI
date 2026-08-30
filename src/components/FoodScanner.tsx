@@ -182,16 +182,19 @@ export const FoodScanner: React.FC<FoodScannerProps> = ({
     startCamera(nextFacing, true);
   };
 
-  // Capture frame from video
+  // Capture full frame from video without edge cropping
   const capturePhoto = () => {
     if (!videoRef.current) return;
     const canvas = document.createElement('canvas');
-    canvas.width = videoRef.current.videoWidth || 640;
-    canvas.height = videoRef.current.videoHeight || 480;
+    const vWidth = videoRef.current.videoWidth || 1280;
+    const vHeight = videoRef.current.videoHeight || 720;
+    canvas.width = vWidth;
+    canvas.height = vHeight;
     const ctx = canvas.getContext('2d');
     if (ctx) {
-      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
+      // Draw 100% full frame of image to identify all items
+      ctx.drawImage(videoRef.current, 0, 0, vWidth, vHeight);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
       setSelectedImage(dataUrl);
       stopCamera();
       analyzePhoto(dataUrl, customDishQuery);
@@ -584,46 +587,55 @@ export const FoodScanner: React.FC<FoodScannerProps> = ({
         {/* Viewfinder / Capture Box */}
         <div className="relative">
           {cameraActive ? (
-            /* Live Camera Stream */
-            <div className="relative w-full aspect-video max-h-[460px] bg-black rounded-2xl overflow-hidden border border-[#D4FF44]/40 shadow-inner flex items-center justify-center">
+            /* Live Camera Stream with Full Plate Coverage */
+            <div className="relative w-full aspect-[4/3] sm:aspect-video min-h-[340px] max-h-[580px] bg-black rounded-3xl overflow-hidden border-2 border-[#D4FF44]/60 shadow-[0_0_40px_rgba(0,0,0,0.8)] flex items-center justify-center">
               <video
                 ref={videoRef}
                 autoPlay
                 playsInline
                 muted
-                className="w-full h-full object-cover"
+                disablePictureInPicture
+                className="w-full h-full object-contain sm:object-cover bg-black"
               />
               
-              {/* Viewfinder Target Reticle */}
-              <div className="absolute inset-8 sm:inset-16 border-2 border-dashed border-[#D4FF44]/60 rounded-2xl pointer-events-none flex items-center justify-center">
-                <div className="text-[10px] font-black uppercase tracking-widest text-[#0A0A0A] bg-[#D4FF44] px-3.5 py-1 rounded-full shadow-lg">
-                  Center food dish here
+              {/* Full-Frame Target Framing Guide */}
+              <div className="absolute inset-4 sm:inset-8 border-2 border-dashed border-[#D4FF44]/50 rounded-2xl pointer-events-none flex items-start justify-center pt-3">
+                <div className="text-[10px] font-black uppercase tracking-widest text-[#0A0A0A] bg-[#D4FF44] px-4 py-1.5 rounded-full shadow-lg">
+                  Full Plate & Ingredients View
                 </div>
               </div>
 
-              {/* Live Camera Controls */}
-              <div className="absolute bottom-4 inset-x-0 flex items-center justify-center gap-4 px-4">
+              {/* Live Camera Mobile-Friendly Floating Action Bar */}
+              <div className="absolute bottom-5 inset-x-0 flex items-center justify-center gap-4 px-4 z-20">
                 <button
                   onClick={handleSwitchCamera}
-                  className="p-3 rounded-full bg-[#111111]/90 hover:bg-[#222222] text-[#F5F5F5] backdrop-blur-md transition-all border border-[#333333]"
-                  title="Switch Camera (Front/Back)"
+                  className="p-3.5 rounded-full bg-[#111111]/90 hover:bg-[#222222] text-[#F5F5F5] backdrop-blur-md transition-all border border-[#333333] shadow-lg hover:scale-105 active:scale-95"
+                  title="Flip Camera (Front / Back)"
                 >
-                  <RefreshCw className="w-5 h-5" />
+                  <RefreshCw className="w-5 h-5 text-[#D4FF44]" />
                 </button>
 
                 <button
                   onClick={capturePhoto}
-                  className="w-16 h-16 rounded-full bg-[#D4FF44] hover:bg-[#C0F030] text-[#0A0A0A] p-1 shadow-[0_0_20px_rgba(212,255,68,0.4)] flex items-center justify-center transition-all hover:scale-105 active:scale-95 border-4 border-[#0A0A0A]"
-                  title="Capture Photo"
+                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#D4FF44] hover:bg-[#C0F030] text-[#0A0A0A] p-4 shadow-[0_0_30px_rgba(212,255,68,0.5)] flex items-center justify-center transition-all hover:scale-110 active:scale-90 border-4 border-[#0A0A0A]"
+                  title="Snap Full Photo"
                 >
-                  <Camera className="w-7 h-7" />
+                  <Camera className="w-8 h-8 text-[#0A0A0A]" />
+                </button>
+
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="p-3.5 rounded-full bg-[#111111]/90 hover:bg-[#222222] text-[#F5F5F5] backdrop-blur-md transition-all border border-[#333333] shadow-lg hover:scale-105 active:scale-95"
+                  title="Choose from Photo Library"
+                >
+                  <Upload className="w-5 h-5 text-[#F5F5F5]" />
                 </button>
 
                 <button
                   onClick={stopCamera}
-                  className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-black uppercase tracking-wider backdrop-blur-md transition-all"
+                  className="px-4 py-3 rounded-2xl bg-rose-600/90 hover:bg-rose-600 text-white text-xs font-black uppercase tracking-wider backdrop-blur-md transition-all shadow-lg hover:scale-105 active:scale-95"
                 >
-                  Cancel
+                  Close
                 </button>
               </div>
             </div>

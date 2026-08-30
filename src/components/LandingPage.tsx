@@ -22,10 +22,10 @@ import {
 } from 'lucide-react';
 
 interface LandingPageProps {
-  onSignIn: () => void;
+  onOpenScanner: () => void;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onSignIn }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onOpenScanner }) => {
   // Contact Form State
   const [contactName, setContactName] = useState('');
   const [contactEmail, setContactEmail] = useState('');
@@ -91,14 +91,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSignIn }) => {
   return (
     <div className="min-h-screen bg-[#07070B] text-[#F5F5F5] selection:bg-[#7056F5] selection:text-white relative overflow-hidden font-sans">
       
-      {/* Subtle Cal.ai Ambient Gradients */}
+      {/* Subtle Ambient Gradients */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -top-32 left-1/4 w-[650px] h-[500px] bg-[#5848C2]/15 rounded-full blur-[150px]" />
         <div className="absolute top-[35%] right-0 w-[550px] h-[450px] bg-[#1E1B4B]/30 rounded-full blur-[160px]" />
         <div className="absolute bottom-10 left-10 w-[500px] h-[400px] bg-[#D4FF44]/6 rounded-full blur-[180px]" />
       </div>
 
-      {/* Hero Section (Matching Image 4 Cal.ai layout) */}
+      {/* Hero Section */}
       <section id="overview" className="relative pt-12 sm:pt-20 pb-20 px-4 sm:px-6 lg:px-12 max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
           
@@ -107,7 +107,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSignIn }) => {
             
             {/* Top Pill */}
             <div 
-              onClick={onSignIn}
+              onClick={onOpenScanner}
               className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#12111D] border border-[#2B274C] text-[#B8A6FF] text-xs font-semibold hover:border-[#7056F5] transition-all cursor-pointer shadow-sm group"
             >
               <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-[#D4FF44]/20 text-[#D4FF44] border border-[#D4FF44]/40">
@@ -129,30 +129,30 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSignIn }) => {
 
             {/* Subtitle */}
             <p className="text-base sm:text-lg text-[#94A3B8] max-w-xl font-normal leading-relaxed">
-              Turn food scanning into instant intelligence. NutriVision uses lifelike multimodal AI to identify dishes, calculate exact calories, extract bioavailable vitamins & minerals, and deliver authentic cooking recipes.
+              Turn food scanning into instant intelligence. NutriVision uses multimodal AI to identify dishes, calculate exact calories, extract bioavailable vitamins & minerals, and deliver authentic cooking recipes.
             </p>
 
             {/* Call to Action Buttons */}
-            <div className="pt-2 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
               <button
-                onClick={onSignIn}
-                className="flex items-center justify-center gap-2.5 px-8 py-4 rounded-xl bg-[#635BFF] hover:bg-[#5248E5] text-white font-bold text-sm tracking-wide transition-all shadow-[0_0_30px_rgba(99,91,255,0.35)] hover:scale-[1.02] active:scale-[0.98]"
+                onClick={onOpenScanner}
+                className="flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl bg-[#D4FF44] hover:bg-[#C0F030] text-[#0A0A0A] font-black text-sm uppercase tracking-wider transition-all shadow-[0_0_30px_rgba(212,255,68,0.35)] hover:scale-105 active:scale-95"
               >
-                <span>Try AI Food Vision</span>
-                <ArrowRight className="w-4 h-4" />
+                <Camera className="w-5 h-5 text-[#0A0A0A]" />
+                <span>Snap Food with Camera</span>
               </button>
 
               <button
-                onClick={onSignIn}
-                className="flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-[#131224] hover:bg-[#1C1A36] border border-[#2B274C] text-[#E2E8F0] font-semibold text-sm transition-all"
+                onClick={onOpenScanner}
+                className="flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl bg-[#17152E] hover:bg-[#201D40] border border-[#2B274C] hover:border-[#D4FF44]/60 text-[#F5F5F5] font-black text-sm uppercase tracking-wider transition-all"
               >
-                <Camera className="w-4 h-4 text-[#D4FF44]" />
-                <span>Sign in with Google</span>
+                <span>Upload Food Image</span>
+                <ArrowRight className="w-4 h-4 text-[#D4FF44]" />
               </button>
             </div>
 
             <p className="text-xs text-[#64748B] font-medium">
-              Real-time camera capture & photo upload • Powered by Google Gemini
+              Real-time camera capture & photo upload • Powered by Google Gemini Flash
             </p>
 
           </div>

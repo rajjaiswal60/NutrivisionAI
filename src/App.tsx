@@ -7,7 +7,6 @@ import { HealthWearableDashboard } from './components/HealthWearableDashboard';
 import { RegionalMealPlanner } from './components/RegionalMealPlanner';
 import { GroceryListManager } from './components/GroceryListManager';
 import { FoodLogHistory } from './components/FoodLogHistory';
-import { GoogleAuthModal } from './components/GoogleAuthModal';
 import { DailyFoodLogEntry, FoodAnalysis, GroceryItem, UserProfile, WearableMetrics, WeeklyMealPlan } from './types';
 import { storage } from './lib/storage';
 
@@ -15,7 +14,10 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'home' | 'scanner' | 'wearables' | 'mealplan' | 'grocery' | 'history'>('scanner');
   
   // App States
-  const [user, setUser] = useState<UserProfile>(storage.getUser());
+  const [user, setUser] = useState<UserProfile>(() => {
+    const saved = storage.getUser();
+    return { ...saved, isGoogleConnected: true };
+  });
   const [wearables, setWearables] = useState<WearableMetrics>(storage.getWearables());
   const [mealPlan, setMealPlan] = useState<WeeklyMealPlan | null>(storage.getMealPlan());
   const [groceryList, setGroceryList] = useState<GroceryItem[]>(storage.getGroceryList());
@@ -23,7 +25,6 @@ export default function App() {
   
   const [currentAnalysis, setCurrentAnalysis] = useState<FoodAnalysis | null>(null);
   const [isScanning, setIsScanning] = useState(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // Synchronize state changes to localStorage
   useEffect(() => {
@@ -88,61 +89,23 @@ export default function App() {
     setFoodLogs((prev) => prev.filter((l) => l.id !== id));
   };
 
-  // Handle Google Sign Out
-  const handleSignOut = () => {
-    const guestUser: UserProfile = {
-      id: `guest-${Date.now()}`,
-      name: 'Sign In',
-      email: '',
-      avatarUrl: '',
-      isGoogleConnected: false,
-      country: 'India',
-      state: 'Maharashtra',
-      city: 'Mumbai',
-      gender: 'male',
-      age: 26,
-      weightKg: 70,
-      heightCm: 175,
-      activityLevel: 'moderately_active',
-      dietaryGoal: 'muscle_gain',
-      dietaryPreference: 'all',
-      regionPreference: 'South Asian',
-      dailyCalorieTarget: 2200,
-      allergies: [],
-      selectedModel: 'gemini-3.6-flash',
-      aiProvider: 'gemini',
-    };
-    setUser(guestUser);
-    storage.setUser(guestUser);
-    setCurrentAnalysis(null);
-    setActiveTab('home');
-  };
-
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-[#F5F5F5] flex flex-col font-sans selection:bg-[#D4FF44] selection:text-[#0A0A0A]">
       
-      {/* Top Navigation Bar with Strict Auth Guard */}
+      {/* Top Navigation Bar with Direct Tab Switching */}
       <Navbar
-        activeTab={user.isGoogleConnected ? activeTab : 'home'}
-        setActiveTab={(tab) => {
-          if (!user.isGoogleConnected && tab !== 'home') {
-            setIsAuthModalOpen(true);
-            return;
-          }
-          setActiveTab(tab);
-        }}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
         user={user}
-        onOpenAuthModal={() => setIsAuthModalOpen(true)}
-        onSignOut={handleSignOut}
         wearableMetrics={wearables}
         todayCaloriesEaten={todayCaloriesEaten}
       />
 
       {/* Main Experience */}
-      {!user.isGoogleConnected ? (
-        <LandingPage onSignIn={() => setIsAuthModalOpen(true)} />
-      ) : activeTab === 'home' ? (
-        <LandingPage onSignIn={() => setActiveTab('scanner')} />
+      {activeTab === 'home' ? (
+        <LandingPage
+          onOpenScanner={() => setActiveTab('scanner')}
+        />
       ) : (
         <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
           
@@ -165,7 +128,7 @@ export default function App() {
                   user={user}
                   onAddToGrocery={handleAddToGrocery}
                   onLogMeal={handleLogMeal}
-                  onOpenLocationModal={() => setIsAuthModalOpen(true)}
+                  onOpenLocationModal={() => {}}
                 />
               )}
             </div>
@@ -218,17 +181,6 @@ export default function App() {
 
         </main>
       )}
-
-      {/* Direct Google Authentication Modal */}
-      <GoogleAuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-        user={user}
-        onSaveUser={(updated) => {
-          setUser(updated);
-          setActiveTab('scanner');
-        }}
-      />
 
     </div>
   );
