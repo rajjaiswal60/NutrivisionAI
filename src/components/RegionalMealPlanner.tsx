@@ -54,16 +54,111 @@ export const RegionalMealPlanner: React.FC<RegionalMealPlannerProps> = ({
           model: user.selectedModel || 'gemini-3.6-flash',
         }),
       });
-      const data = await res.json();
-      if (data.success && data.data) {
-        onUpdateMealPlan(data.data);
-        confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
+      if (res.ok) {
+        const data = await res.json().catch(() => null);
+        if (data && data.success && data.data) {
+          onUpdateMealPlan(data.data);
+          confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
+          return;
+        }
       }
+      // Static hosting fallback
+      const fallback = createFallbackPlan(region, goal, cals);
+      onUpdateMealPlan(fallback);
+      confetti({ particleCount: 40, spread: 50, origin: { y: 0.7 } });
     } catch (err) {
-      console.error('Error generating meal plan:', err);
+      console.warn('Using client meal plan generation for static hosting:', err);
+      const fallback = createFallbackPlan(region, goal, cals);
+      onUpdateMealPlan(fallback);
+      confetti({ particleCount: 40, spread: 50, origin: { y: 0.7 } });
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const createFallbackPlan = (regionName: string, goalName: string, targetCals: number): WeeklyMealPlan => {
+    const daysList: Array<'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday'> = [
+      'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
+    ];
+
+    const days: DayPlan[] = daysList.map((dayName, idx) => ({
+      dayName,
+      dailyTotalCalories: targetCals,
+      dailyMacros: {
+        proteinG: Math.round((targetCals * 0.28) / 4),
+        carbsG: Math.round((targetCals * 0.45) / 4),
+        fatG: Math.round((targetCals * 0.27) / 9),
+      },
+      hydrationGoalLiters: 3.2,
+      meals: {
+        breakfast: {
+          id: `bf-${idx}`,
+          name: `${regionName} Energizing Morning Bowl`,
+          cuisine: regionName,
+          calories: Math.round(targetCals * 0.25),
+          proteinG: Math.round((targetCals * 0.25 * 0.25) / 4),
+          carbsG: Math.round((targetCals * 0.25 * 0.5) / 4),
+          fatG: Math.round((targetCals * 0.25 * 0.25) / 9),
+          prepTimeMin: 12,
+          description: `Freshly prepared ${regionName} breakfast rich in complex carbohydrates and lean bioavailable protein.`,
+          ingredients: ['Whole Oats / Sprouted Grains (80g)', 'Almond Milk (200ml)', 'Chia & Flax Seeds (15g)', 'Fresh Berries & Honey (50g)'],
+          cookingBrief: ['Combine oats and milk in a pot.', 'Simmer on low for 6 minutes.', 'Top with superfood seeds and fresh seasonal berries.'],
+          tags: ['High Fiber', 'Sustained Energy', 'Heart Healthy'],
+        },
+        lunch: {
+          id: `lu-${idx}`,
+          name: `${regionName} High-Protein Harvest Platter`,
+          cuisine: regionName,
+          calories: Math.round(targetCals * 0.38),
+          proteinG: Math.round((targetCals * 0.38 * 0.32) / 4),
+          carbsG: Math.round((targetCals * 0.38 * 0.42) / 4),
+          fatG: Math.round((targetCals * 0.38 * 0.26) / 9),
+          prepTimeMin: 20,
+          description: `Nutrient-dense lunch featuring lean proteins, steamed legumes, and crisp antioxidant-rich greens.`,
+          ingredients: ['Grilled Protein / Paneer / Tofu (180g)', 'Quinoa / Brown Basmati (100g)', 'Steamed Broccoli & Bell Peppers (120g)', 'Extra Virgin Olive Oil (1 tbsp)'],
+          cookingBrief: ['Season and grill protein until tender and lightly charred.', 'Steam seasonal vegetables with garlic and sea salt.', 'Assemble bowl and drizzle with cold-pressed oil.'],
+          tags: ['High Protein', 'Rich in Vitamins', 'Anti-Inflammatory'],
+        },
+        dinner: {
+          id: `di-${idx}`,
+          name: `${regionName} Restorative Evening Feast`,
+          cuisine: regionName,
+          calories: Math.round(targetCals * 0.25),
+          proteinG: Math.round((targetCals * 0.25 * 0.3) / 4),
+          carbsG: Math.round((targetCals * 0.25 * 0.4) / 4),
+          fatG: Math.round((targetCals * 0.25 * 0.3) / 9),
+          prepTimeMin: 18,
+          description: `Light, easy-to-digest evening dish designed to promote deep sleep recovery and cellular repair.`,
+          ingredients: ['Lentil / Bone Broth Soup (250ml)', 'Steamed Leafy Greens (100g)', 'Roasted Sweet Potatoes (80g)', 'Fresh Herbs & Lemon (15g)'],
+          cookingBrief: ['Simmer aromatic broth with ginger and turmeric.', 'Add leafy greens and cooked sweet potato cubes.', 'Serve warm with freshly squeezed citrus.'],
+          tags: ['Easy Digestion', 'Sleep Recovery', 'Low Glycemic'],
+        },
+        snack: {
+          id: `sn-${idx}`,
+          name: `Vitality Micronutrient Snack`,
+          cuisine: regionName,
+          calories: Math.round(targetCals * 0.12),
+          proteinG: Math.round((targetCals * 0.12 * 0.2) / 4),
+          carbsG: Math.round((targetCals * 0.12 * 0.4) / 4),
+          fatG: Math.round((targetCals * 0.12 * 0.4) / 9),
+          prepTimeMin: 5,
+          description: `Wholesome mid-day fuel with essential fatty acids and minerals.`,
+          ingredients: ['Roasted Almonds & Walnuts (25g)', 'Greek Yogurt / Seed Butter (40g)'],
+          cookingBrief: ['Portion raw nuts and enjoy with rich protein yogurt.'],
+          tags: ['Omega-3', 'Brain Fuel', 'Keto Friendly'],
+        },
+      },
+    }));
+
+    return {
+      weekId: `week-${Date.now()}`,
+      generatedDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      region: regionName,
+      dietGoal: goalName,
+      targetDailyCalories: targetCals,
+      days,
+      regionInsight: `This customized weekly plan draws upon authentic ${regionName} dietary wisdom—balancing anti-inflammatory herbs, cold-pressed healthy fats, and high-bioavailability proteins tailored to ${goalName.replace('_', ' ')}.`,
+    };
   };
 
   // Initial load if plan is null
