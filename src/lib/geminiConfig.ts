@@ -13,9 +13,10 @@ export const GEMINI_CONFIG = {
   // State-of-the-art latest Gemini Flash models
   primaryModel: "gemini-3.7-flash",
   
-  // High-resilience fallback cascade across Gemini Flash generations
+  // Multi-Model Fallback Engine: Seamlessly attempts candidate models if quota or rate limits are reached
   fallbackModels: [
     "gemini-3.7-flash",
+    "gemini-3.1-flash-lite",
     "gemini-3.6-flash",
     "gemini-2.5-flash",
     "gemini-1.5-flash",

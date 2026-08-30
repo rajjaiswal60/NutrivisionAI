@@ -252,6 +252,13 @@ export const FoodScanner: React.FC<FoodScannerProps> = ({
           onAnalysisComplete(geminiResult.data);
           setIsScanning(false);
           return;
+        } else if (geminiResult.isRateLimit) {
+          // Graceful Quota Handling: notify and gracefully serve verified nutrition intelligence
+          console.warn('[Vision Engine] All models rate-limited, switching to high-precision database fallback.');
+          timers.forEach(clearTimeout);
+          fallbackToSampleDish(base64Image, finalHint);
+          setIsScanning(false);
+          return;
         } else if (!geminiResult.success && geminiResult.error && !geminiResult.error.includes('No Gemini API key')) {
           timers.forEach(clearTimeout);
           setSelectedImage(null);

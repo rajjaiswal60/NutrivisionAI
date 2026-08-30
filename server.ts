@@ -33,23 +33,23 @@ function getGeminiClient(customApiKey?: string): GoogleGenAI | null {
   });
 }
 
-// Resilient Gemini caller with automatic fallback across official Gemini models
+// Resilient Multi-Model Fallback Engine with automatic cascade across Gemini models
 async function callGeminiSafe(
   ai: GoogleGenAI,
-  preferredModel: string = "gemini-3.6-flash",
+  preferredModel: string = "gemini-3.7-flash",
   params: {
     contents: any;
     config?: any;
   }
 ) {
   const modelsToTry = [
-    preferredModel || "gemini-3.6-flash",
-    "gemini-3.6-flash",
-    "gemini-3.5-flash",
+    preferredModel || "gemini-3.7-flash",
     "gemini-3.7-flash",
+    "gemini-3.1-flash-lite",
+    "gemini-3.6-flash",
     "gemini-2.5-flash",
-    "gemini-2.0-flash",
     "gemini-1.5-flash",
+    "gemini-2.0-flash",
   ];
 
   const tried = new Set<string>();
@@ -65,7 +65,12 @@ async function callGeminiSafe(
       });
     } catch (err: any) {
       lastError = err;
-      console.warn(`Model [${model}] call failed:`, err?.message || err);
+      const isRateLimit = err?.status === 429 || err?.message?.includes("429") || err?.message?.includes("RESOURCE_EXHAUSTED") || err?.message?.includes("quota");
+      if (isRateLimit) {
+        console.warn(`[Multi-Model Engine] Model [${model}] rate limit/quota reached. Seamlessly attempting candidate model...`);
+      } else {
+        console.warn(`[Multi-Model Engine] Model [${model}] failed:`, err?.message || err);
+      }
     }
   }
 

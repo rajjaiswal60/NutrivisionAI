@@ -1,10 +1,23 @@
 import { FoodAnalysis } from "../types";
 import { GEMINI_CONFIG, getActiveGeminiApiKey } from "./geminiConfig";
 
+export interface GeminiAnalysisResult {
+  success: boolean;
+  data?: FoodAnalysis;
+  error?: string;
+  isRateLimit?: boolean;
+  retryAfterSeconds?: number;
+  modelUsed?: string;
+}
+
+/**
+ * Multi-Model Fallback Engine for Client-Side Vision Analysis
+ * Automatically cascades across latest Gemini Flash candidate models if quota or rate limit is hit.
+ */
 export async function analyzeFoodWithGeminiFlash(
   base64Image: string,
   hint?: string
-): Promise<{ success: boolean; data?: FoodAnalysis; error?: string }> {
+): Promise<GeminiAnalysisResult> {
   const apiKey = getActiveGeminiApiKey();
 
   if (!apiKey) {
@@ -91,6 +104,7 @@ Return ONLY raw valid JSON (no markdown formatting, no backticks, no extra text)
   ];
 
   const triedModels = new Set<string>();
+  let rateLimitEncountered = false;
 
   for (const model of models) {
     if (triedModels.has(model)) continue;
@@ -120,9 +134,16 @@ Return ONLY raw valid JSON (no markdown formatting, no backticks, no extra text)
         }),
       });
 
+      // Catch Rate Limit (429) or Service Overload (503) and cascade to next model
+      if (response.status === 429 || response.status === 503) {
+        rateLimitEncountered = true;
+        console.warn(`[Multi-Model Engine] Model ${model} rate-limited (${response.status}). Seamlessly falling back to next candidate model...`);
+        continue;
+      }
+
       if (!response.ok) {
         const errJson = await response.json().catch(() => ({}));
-        console.warn(`Gemini model ${model} error:`, errJson);
+        console.warn(`[Multi-Model Engine] Model ${model} returned error ${response.status}:`, errJson);
         continue;
       }
 
@@ -195,15 +216,26 @@ Return ONLY raw valid JSON (no markdown formatting, no backticks, no extra text)
         return {
           success: true,
           data: finalAnalysis,
+          modelUsed: model,
         };
       }
     } catch (e: any) {
-      console.warn(`Error trying Gemini model ${model}:`, e?.message || e);
+      console.warn(`[Multi-Model Engine] Exception with model ${model}:`, e?.message || e);
     }
+  }
+
+  // Graceful Quota Handling
+  if (rateLimitEncountered) {
+    return {
+      success: false,
+      isRateLimit: true,
+      retryAfterSeconds: 15,
+      error: "⚠️ AI Vision Quota Temporarily Reached: All Gemini model tiers are currently at capacity. Please wait ~15 seconds and try scanning again.",
+    };
   }
 
   return {
     success: false,
-    error: "Gemini Vision AI could not process this image. Please check your API key or try again.",
+    error: "Unable to process food vision at this moment. Please check your network connection and API key.",
   };
 }
