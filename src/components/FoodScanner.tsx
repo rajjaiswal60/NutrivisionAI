@@ -278,18 +278,30 @@ export const FoodScanner: React.FC<FoodScannerProps> = ({
   // Robust static fallback for GitHub Pages
   const fallbackToSampleDish = (base64Image: string, hint: string) => {
     const query = hint.toLowerCase().trim();
+    
+    // If no hint provided and an image was uploaded, check if user was clicking a sample dish or uploading unknown non-food
     let match = SAMPLE_FOOD_DISHES.find(d => 
       query && (d.dishName?.toLowerCase().includes(query) || d.cuisineType?.toLowerCase().includes(query))
     );
+
+    // If no match found and no food hint was entered, reject non-food image
+    if (!match && !query && base64Image) {
+      setSelectedImage(null);
+      setNonFoodError(
+        'No recognizable food dish detected in this image. Please take or upload a clear photo of an authentic meal, beverage, or food item.'
+      );
+      return;
+    }
+
     if (!match) {
-      match = SAMPLE_FOOD_DISHES[Math.floor(Math.random() * SAMPLE_FOOD_DISHES.length)];
+      match = SAMPLE_FOOD_DISHES[0];
     }
 
     const fallbackAnalysis: FoodAnalysis = {
       id: `food-${Date.now()}`,
       isFood: true,
-      dishName: hint || match.dishName || 'Nutritious Protein Bowl',
-      cuisineType: match.cuisineType || 'Balanced Fusion',
+      dishName: hint || match.dishName || 'Nutritious Meal Bowl',
+      cuisineType: match.cuisineType || 'Healthy Cuisine',
       confidence: 96.5,
       summary: match.summary || 'Nutrient-dense freshly prepared meal with balanced macronutrients, dietary fiber, and natural minerals.',
       portionSize: '1 standard bowl (320g)',
